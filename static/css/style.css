@@ -1,0 +1,442 @@
+/* =========================================================================
+   AI Chatbot — global styles
+   Plain CSS (no Tailwind @apply, which the Play CDN cannot process in an
+   external stylesheet). Complements the utility classes used in templates.
+   ========================================================================= */
+
+:root {
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, Helvetica, Arial, sans-serif;
+  --brand: #4f46e5;
+  --brand-hover: #4338ca;
+  --radius: 14px;
+  --scrollbar: #d1d5db;
+  --scrollbar-hover: #9ca3af;
+}
+
+html {
+  height: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Smooth theme transitions on the surfaces that change color */
+body,
+ aside,
+ header,
+ .composer,
+ .conv-item,
+ .suggestion {
+  transition: background-color 0.25s ease, border-color 0.25s ease,
+    color 0.25s ease;
+}
+
+/* Respect users who prefer less motion ------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* The `hidden` attribute only maps to a UA rule ([hidden]{display:none}),
+   which LOSES to author display utilities such as .flex. Elements that are
+   both `class="flex"` and toggled via .hidden (welcome screen, action rows)
+   would otherwise stay visible and overlap content. Force it. */
+[hidden] {
+  display: none !important;
+}
+
+/* Inline notice appended below a response that failed or stopped midway
+   through streaming, so an incomplete answer is never shown silently. */
+.stream-error {
+  margin-top: 0.6rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.83rem;
+  line-height: 1.45;
+  color: #b91c1c;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+}
+.dark .stream-error {
+  color: #fca5a5;
+  background: rgba(127, 29, 29, 0.2);
+  border-color: rgba(153, 27, 27, 0.55);
+}
+
+/* ----------------------------- Scrollbars --------------------------- */
+.scroll-y {
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar) transparent;
+}
+.scroll-y::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.scroll-y::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scroll-y::-webkit-scrollbar-thumb {
+  background-color: var(--scrollbar);
+  border-radius: 9999px;
+}
+.scroll-y::-webkit-scrollbar-thumb:hover {
+  background-color: var(--scrollbar-hover);
+}
+.dark .scroll-y {
+  scrollbar-color: #4b5563 transparent;
+}
+.dark .scroll-y::-webkit-scrollbar-thumb {
+  background-color: #4b5563;
+}
+
+/* --------------------------- Focus visibility ----------------------- */
+:where(a, button, input, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--brand);
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* ------------------------------ Animations -------------------------- */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-fade-up {
+  animation: fade-up 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+.animate-pop {
+  animation: pop-in 0.2s ease-out both;
+}
+
+/* Typing indicator (three bouncing dots) */
+.typing-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 2px;
+}
+.typing-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0.5;
+  animation: bounce 1.2s infinite ease-in-out;
+}
+.typing-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.typing-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  40% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+/* =========================================================================
+   Markdown prose (AI responses)
+   ========================================================================= */
+.prose {
+  font-size: 0.975rem;
+  line-height: 1.75;
+  word-wrap: break-word;
+  overflow-wrap: anywhere;
+}
+.prose > *:first-child {
+  margin-top: 0;
+}
+.prose > *:last-child {
+  margin-bottom: 0;
+}
+.prose p {
+  margin: 0.6em 0;
+}
+.prose h1,
+.prose h2,
+.prose h3,
+.prose h4 {
+  font-weight: 650;
+  line-height: 1.3;
+  margin: 1.1em 0 0.5em;
+}
+.prose h1 {
+  font-size: 1.4em;
+}
+.prose h2 {
+  font-size: 1.25em;
+}
+.prose h3 {
+  font-size: 1.1em;
+}
+.prose h4 {
+  font-size: 1em;
+}
+.prose ul,
+.prose ol {
+  margin: 0.6em 0;
+  padding-left: 1.4em;
+}
+.prose ul {
+  list-style: disc;
+}
+.prose ol {
+  list-style: decimal;
+}
+.prose li {
+  margin: 0.25em 0;
+}
+.prose li > ul,
+.prose li > ol {
+  margin: 0.2em 0;
+}
+.prose a {
+  color: var(--brand);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dark .prose a {
+  color: #a5b4fc;
+}
+.prose blockquote {
+  margin: 0.8em 0;
+  padding: 0.2em 0 0.2em 1em;
+  border-left: 3px solid var(--scrollbar);
+  color: #6b7280;
+}
+.dark .prose blockquote {
+  color: #9ca3af;
+}
+.prose hr {
+  border: 0;
+  border-top: 1px solid #e5e7eb;
+  margin: 1.2em 0;
+}
+.dark .prose hr {
+  border-top-color: #374151;
+}
+.prose table {
+  border-collapse: collapse;
+  margin: 0.9em 0;
+  width: 100%;
+  display: block;
+  overflow-x: auto;
+}
+.prose th,
+.prose td {
+  border: 1px solid #e5e7eb;
+  padding: 0.45em 0.75em;
+  text-align: left;
+}
+.dark .prose th,
+.dark .prose td {
+  border-color: #374151;
+}
+.prose th {
+  background: #f9fafb;
+  font-weight: 600;
+}
+.dark .prose th {
+  background: #1f2937;
+}
+.prose img {
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+/* Inline code */
+.prose code {
+  font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas,
+    "Liberation Mono", monospace;
+  font-size: 0.86em;
+  background: #eef2f7;
+  padding: 0.15em 0.4em;
+  border-radius: 6px;
+}
+.dark .prose code {
+  background: #26303f;
+  color: #e5e7eb;
+}
+/* Don't double-wrap the code inside a fenced block */
+.prose pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: 0.85em;
+  color: inherit;
+}
+
+/* Fenced code blocks — always dark, ChatGPT-style, in both themes */
+.prose pre {
+  position: relative;
+  margin: 0.9em 0;
+  padding: 0.9em 1em;
+  background: #0d1117;
+  color: #e6edf3;
+  border-radius: 12px;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.prose pre::-webkit-scrollbar {
+  height: 8px;
+}
+.prose pre::-webkit-scrollbar-thumb {
+  background: #30363d;
+  border-radius: 8px;
+}
+.prose pre .code-lang {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #8b949e;
+  user-select: none;
+}
+
+/* Copy button on code blocks */
+.prose pre .copy-btn {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  font-size: 0.7rem;
+  color: #c9d1d9;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s ease, background 0.15s ease;
+}
+.prose pre:hover .copy-btn {
+  opacity: 1;
+}
+.prose pre .copy-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+/* Toast notifications */
+.toast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 80;
+  max-width: min(92vw, 30rem);
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+  animation: fade-up 0.25s ease-out both;
+}
+.toast.error {
+  background: #dc2626;
+}
+.toast.success {
+  background: #16a34a;
+}
+
+/* Sidebar backdrop (mobile drawer) */
+.sidebar-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45);
+  backdrop-filter: blur(2px);
+  z-index: 30;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.sidebar-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Conversation row action menu */
+.conv-menu-btn {
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+.conv-item:hover .conv-menu-btn,
+.conv-item:focus-within .conv-menu-btn {
+  opacity: 1;
+}
+.conv-menu {
+  position: absolute;
+  right: 8px;
+  top: 100%;
+  z-index: 20;
+  min-width: 140px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+  padding: 4px;
+}
+.dark .conv-menu {
+  background: #1f2937;
+  border-color: #374151;
+}
+.conv-menu button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border-radius: 7px;
+  font-size: 0.82rem;
+  color: #374151;
+  text-align: left;
+}
+.dark .conv-menu button {
+  color: #e5e7eb;
+}
+.conv-menu button:hover {
+  background: #f3f4f6;
+}
+.dark .conv-menu button:hover {
+  background: #374151;
+}
+.conv-menu button.danger {
+  color: #dc2626;
+}

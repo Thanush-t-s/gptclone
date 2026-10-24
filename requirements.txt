@@ -1,0 +1,22 @@
+# Flask and web
+Flask==3.0.3
+flask-cors==5.0.0
+
+# AI/ML
+langchain==0.3.21
+langchain-google-genai==2.0.1
+google-genai==1.6.0
+
+# Database
+flask-sqlalchemy==3.1.1
+flask-migrate==4.0.7
+
+# Utilities
+python-dotenv==1.0.1
+markupsafe==2.5.0
+
+# Markdown rendering
+markdown==3.6.0
+
+# Security
+itsdangerous==2.2.0

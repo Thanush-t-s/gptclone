@@ -1,0 +1,1115 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if mode == 'signup' %}Create an account - Aura Hub{% elif mode == 'forgot' %}Forgot Password - Aura Hub{% elif mode == 'reset' %}Reset Password - Aura Hub{% else %}Welcome back - Aura Hub{% endif %}
+{% endblock %}
+
+{% block head %}
+<style>
+  /* Ambient canvas background */
+  .auth-page-bg {
+    background-color: #f3f2fc;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+  .dark .auth-page-bg {
+    background-color: #0d0d12;
+  }
+
+  /* Soft atmospheric glow orbs */
+  .glow-orb-1 {
+    position: fixed;
+    top: -15%;
+    left: 10%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.22) 0%, rgba(192, 132, 252, 0.08) 50%, transparent 70%);
+    filter: blur(80px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  .glow-orb-2 {
+    position: fixed;
+    bottom: -15%;
+    right: 10%;
+    width: 650px;
+    height: 650px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(99, 102, 241, 0.18) 0%, rgba(216, 180, 254, 0.08) 50%, transparent 70%);
+    filter: blur(90px);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Outer card frame */
+  .auth-card {
+    background: #ffffff;
+    border-radius: 28px;
+    box-shadow: 0 25px 70px -15px rgba(99, 102, 241, 0.16), 0 10px 30px -10px rgba(15, 23, 42, 0.06), 0 0 0 1px rgba(226, 232, 240, 0.7);
+    padding: 14px;
+    position: relative;
+    z-index: 10;
+  }
+  .dark .auth-card {
+    background: #141419;
+    box-shadow: 0 25px 70px -15px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(255, 255, 255, 0.07);
+  }
+
+  /* Left Hero Card with Rich Mesh Gradient */
+  .hero-panel {
+    border-radius: 22px;
+    position: relative;
+    overflow: hidden;
+    background: #1e1b4b;
+    background-image: 
+      radial-gradient(at 0% 0%, #a5b4fc 0px, transparent 50%),
+      radial-gradient(at 95% 10%, #c084fc 0px, transparent 50%),
+      radial-gradient(at 10% 95%, #1e3a8a 0px, transparent 55%),
+      radial-gradient(at 85% 90%, #4338ca 0px, transparent 50%),
+      radial-gradient(at 50% 50%, #2563eb 0px, transparent 65%),
+      linear-gradient(135deg, #1e1b4b 0%, #312e81 30%, #4338ca 70%, #6366f1 100%);
+    background-size: 150% 150%;
+    animation: meshShift 18s ease-in-out infinite alternate;
+  }
+
+  @keyframes meshShift {
+    0% { background-position: 0% 0%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 100%; }
+  }
+
+  /* Dynamic fluid blobs inside left panel */
+  .hero-panel::before {
+    content: "";
+    position: absolute;
+    top: -20%;
+    left: -20%;
+    width: 140%;
+    height: 140%;
+    background: radial-gradient(circle at 30% 30%, rgba(199, 210, 254, 0.35) 0%, transparent 40%),
+                radial-gradient(circle at 80% 20%, rgba(232, 121, 249, 0.3) 0%, transparent 45%),
+                radial-gradient(circle at 60% 80%, rgba(96, 165, 250, 0.3) 0%, transparent 40%);
+    filter: blur(40px);
+    pointer-events: none;
+    animation: floatBlobs 12s ease-in-out infinite alternate;
+  }
+
+  @keyframes floatBlobs {
+    0% { transform: scale(1) rotate(0deg); }
+    100% { transform: scale(1.1) rotate(6deg); }
+  }
+
+  /* Primary Gradient Button */
+  .btn-gradient {
+    background: linear-gradient(135deg, #4338ca 0%, #4f46e5 50%, #6366f1 100%);
+    color: #ffffff;
+    box-shadow: 0 10px 24px -5px rgba(79, 70, 229, 0.45);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .btn-gradient:hover:not(:disabled) {
+    background: linear-gradient(135deg, #3730a3 0%, #4338ca 50%, #4f46e5 100%);
+    box-shadow: 0 14px 28px -4px rgba(79, 70, 229, 0.55);
+    transform: translateY(-1.5px);
+  }
+  .btn-gradient:active:not(:disabled) {
+    transform: translateY(0.5px);
+    box-shadow: 0 6px 16px -3px rgba(79, 70, 229, 0.4);
+  }
+  .btn-gradient:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+    filter: grayscale(20%);
+  }
+
+  /* Social Pill Button */
+  .btn-social {
+    background-color: #f1f3f6;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    transition: all 0.2s ease;
+  }
+  .btn-social:hover {
+    background-color: #e6e9ef;
+    border-color: #cbd5e1;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px -2px rgba(0, 0, 0, 0.05);
+  }
+  .dark .btn-social {
+    background-color: #1f1f26;
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .dark .btn-social:hover {
+    background-color: #282833;
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+
+  /* Modern input fields */
+  .auth-input {
+    background-color: #ffffff;
+    border: 1.5px solid #e2e8f0;
+    transition: all 0.2s ease;
+  }
+  .auth-input:focus {
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3.5px rgba(99, 102, 241, 0.18);
+    outline: none;
+  }
+  .dark .auth-input {
+    background-color: #1a1a22;
+    border-color: #2d2d38;
+    color: #f8fafc;
+  }
+  .dark .auth-input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 3.5px rgba(129, 140, 248, 0.22);
+  }
+
+  /* Error state shake animation */
+  @keyframes shakeInput {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+  }
+  .shake {
+    animation: shakeInput 0.4s ease-in-out;
+  }
+
+  /* Password strength progress */
+  .strength-bar {
+    height: 4px;
+    border-radius: 9999px;
+    transition: width 0.3s ease, background-color 0.3s ease;
+  }
+
+  /* Modal Backdrop */
+  .modal-backdrop {
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(6px);
+  }
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="auth-page-bg flex items-center justify-center min-h-screen py-6 px-3 sm:px-6 lg:px-8">
+    <!-- Ambient ambient glow background orbs -->
+    <div class="glow-orb-1"></div>
+    <div class="glow-orb-2"></div>
+
+    <!-- Main Centered Authentication Card -->
+    <div class="auth-card w-full max-w-[1040px]">
+        <div class="grid grid-cols-1 lg:grid-cols-12 min-h-[590px] lg:min-h-[630px]">
+            
+            <!-- ============================================================= -->
+            <!-- LEFT COLUMN: Brand Hero Canvas with Mesh Gradient -->
+            <!-- ============================================================= -->
+            <div class="hero-panel lg:col-span-5 p-8 sm:p-10 flex flex-col justify-between text-white select-none">
+                <!-- Top Brand Logo (Crisp White Asterisk Blossom) -->
+                <div class="relative z-10 flex items-center justify-between">
+                    <a href="{{ url_for('login') }}" class="inline-flex items-center gap-3 group" title="Aura Hub">
+                        <img src="/static/images/logo-white.svg" alt="Aura Logo" class="w-10 h-10 drop-shadow-md transition-transform duration-300 group-hover:rotate-45">
+                        <span class="text-xl font-bold tracking-tight text-white drop-shadow-sm">Aura</span>
+                    </a>
+                    <span class="text-xs font-semibold uppercase tracking-wider px-2.5 py-1 rounded-full bg-white/15 backdrop-blur-md text-white/90 border border-white/20">
+                        v2.5
+                    </span>
+                </div>
+
+                <!-- Bottom Hero Typography (Exactly matching user's design) -->
+                <div class="relative z-10 mt-20 lg:mt-0">
+                    <p class="text-white/80 text-sm sm:text-base font-medium tracking-wide mb-2.5">
+                        You can easily
+                    </p>
+                    <h1 class="text-2xl sm:text-[31px] font-bold text-white leading-[1.22] tracking-tight">
+                        Get access your personal hub for clarity and productivity
+                    </h1>
+                    
+                    <!-- Feature Highlights -->
+                    <div class="mt-6 flex flex-wrap gap-2 text-xs font-medium text-white/90">
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20">
+                            <i class="fas fa-wand-magic-sparkles text-amber-300 text-[10px]"></i> AI Powered Chat
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20">
+                            <i class="fas fa-shield-halved text-emerald-300 text-[10px]"></i> Secure Auth
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/15 backdrop-blur-md border border-white/20">
+                            <i class="fas fa-bolt text-cyan-300 text-[10px]"></i> Instant Sync
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============================================================= -->
+            <!-- RIGHT COLUMN: Authentication Form & Controls -->
+            <!-- ============================================================= -->
+            <div class="lg:col-span-7 p-6 sm:p-8 lg:py-7 lg:px-10 flex flex-col justify-center">
+                
+                <!-- Brand icon on top of right panel (Color Starburst Asterisk) -->
+                <div class="flex items-center justify-between mb-3">
+                    <img src="/static/images/logo-color.svg" alt="Aura Logo" class="w-8 h-8 transition-transform duration-300 hover:rotate-45">
+                    
+                    <!-- Quick Mode Switcher Pills -->
+                    <div class="inline-flex p-1 bg-gray-100 dark:bg-gray-800/80 rounded-xl text-xs font-semibold">
+                        <button type="button" id="tabLoginBtn" onclick="switchAuthMode('login')"
+                                class="px-3.5 py-1.5 rounded-lg transition-all {% if mode != 'signup' and mode != 'forgot' and mode != 'reset' %}bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}">
+                            Sign In
+                        </button>
+                        <button type="button" id="tabSignupBtn" onclick="switchAuthMode('signup')"
+                                class="px-3.5 py-1.5 rounded-lg transition-all {% if mode == 'signup' %}bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm{% else %}text-gray-500 hover:text-gray-800 dark:hover:text-gray-200{% endif %}">
+                            Sign Up
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Header Title & Subtitle -->
+                <div class="mb-4">
+                    <h2 id="formTitle" class="text-2xl sm:text-[28px] font-bold text-gray-900 dark:text-white tracking-tight">
+                        {% if mode == 'signup' %}Create an account{% elif mode == 'forgot' %}Forgot password{% elif mode == 'reset' %}Set new password{% else %}Welcome back{% endif %}
+                    </h2>
+                    <p id="formSubtitle" class="text-sm text-gray-500 dark:text-gray-400 mt-1.5 leading-relaxed">
+                        {% if mode == 'signup' or mode == 'login' or not mode %}
+                        Access your tasks, notes, and projects anytime, anywhere - and keep everything flowing in one place.
+                        {% elif mode == 'forgot' %}
+                        Enter your registered email address and we'll send you instructions to safely reset your password.
+                        {% elif mode == 'reset' %}
+                        Choose a strong, secure new password for your account to regain access.
+                        {% endif %}
+                    </p>
+                </div>
+
+                <!-- Flashed Feedback Messages -->
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="space-y-2 mb-4" id="flashContainer">
+                            {% for category, message in messages %}
+                                <div class="flex items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium {% if category == 'error' %}bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40{% elif category == 'success' %}bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40{% else %}bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40{% endif %}">
+                                    <i class="fas {% if category == 'error' %}fa-circle-exclamation text-red-500{% elif category == 'success' %}fa-circle-check text-emerald-500{% else %}fa-circle-info text-indigo-500{% endif %}"></i>
+                                    <span class="flex-1">{{ message }}</span>
+                                    <button type="button" onclick="this.parentElement.remove()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
+                                        <i class="fas fa-times text-xs"></i>
+                                    </button>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+
+                <!-- Dynamic Client Feedback Alert Box -->
+                <div id="dynamicAlert" class="hidden mb-4 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium items-center gap-2.5">
+                    <i id="dynamicAlertIcon" class="fas fa-circle-exclamation"></i>
+                    <span id="dynamicAlertText" class="flex-1"></span>
+                    <button type="button" onclick="hideDynamicAlert()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xs"></i>
+                    </button>
+                </div>
+
+                <!-- Lockout Countdown Banner (Edge Case: Brute Force Protection) -->
+                <div id="lockoutBanner" class="hidden mb-4 rounded-xl p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/40 text-amber-800 dark:text-amber-200 text-xs sm:text-sm">
+                    <div class="flex items-center gap-2 font-semibold">
+                        <i class="fas fa-lock text-amber-600 dark:text-amber-400 animate-pulse"></i>
+                        <span>Security Notice: Account Temporarily Locked</span>
+                    </div>
+                    <p class="mt-1 text-amber-700 dark:text-amber-300">
+                        Too many failed login attempts. Please wait <span id="lockoutSeconds" class="font-bold text-amber-900 dark:text-amber-100">60</span> seconds before trying again.
+                    </p>
+                </div>
+
+                <!-- Demo Password Reset Instant Preview Banner -->
+                {% if reset_url %}
+                <div class="mb-4 p-3 rounded-xl bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 text-xs sm:text-sm">
+                    <div class="flex items-center justify-between font-semibold text-purple-900 dark:text-purple-200 mb-1">
+                        <span class="flex items-center gap-1.5"><i class="fas fa-envelope-open-text text-purple-600"></i> Simulated Email Delivery</span>
+                        <span class="text-[11px] font-mono bg-purple-100 dark:bg-purple-900/60 px-2 py-0.5 rounded">Token Ready</span>
+                    </div>
+                    <p class="text-purple-700 dark:text-purple-300 text-xs">
+                        In development/demo mode, your reset link was generated instantly:
+                    </p>
+                    <div class="mt-2 flex items-center gap-2">
+                        <a href="{{ reset_url }}" class="inline-flex items-center gap-1 px-3 py-1 bg-purple-600 text-white rounded-lg text-xs font-medium hover:bg-purple-700 transition">
+                            <i class="fas fa-arrow-right text-[10px]"></i> Open Reset Link Now
+                        </a>
+                        <button type="button" onclick="navigator.clipboard.writeText('{{ reset_url }}'); alert('Reset link copied to clipboard!');"
+                                class="px-2.5 py-1 bg-white dark:bg-gray-800 border border-purple-200 dark:border-purple-700 rounded-lg text-xs font-medium text-purple-800 dark:text-purple-300 hover:bg-purple-50">
+                            Copy Link
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+
+                <!-- ========================================================= -->
+                <!-- AUTH FORM -->
+                <!-- ========================================================= -->
+                <form id="authForm" novalidate method="POST" action="{% if mode == 'signup' %}{{ url_for('register') }}{% elif mode == 'forgot' %}{{ url_for('forgot_password') }}{% elif mode == 'reset' %}{{ url_for('reset_password', token=token|default('')) }}{% else %}{{ url_for('login') }}{% endif %}" class="space-y-4">
+                    <input type="hidden" name="mode" id="formModeInput" value="{{ mode|default('login') }}">
+
+                    <!-- Field: Full Name (Visible only in Signup mode) -->
+                    <div id="fullNameGroup" class="{% if mode != 'signup' %}hidden{% endif %}">
+                        <label for="fullNameInput" class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                            Full name
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="fullNameInput" name="full_name" value="{{ full_name|default('') }}"
+                                   class="auth-input w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400"
+                                   placeholder="Faraz Haider" autocomplete="name">
+                            <span class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">
+                                <i class="fas fa-user"></i>
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Field: Email / Identifier -->
+                    <div id="emailGroup" class="{% if mode == 'reset' %}hidden{% endif %}">
+                        <label for="emailInput" class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                            <span id="emailLabelText">Your email</span>
+                        </label>
+                        <div class="relative">
+                            <input type="text" id="emailInput" name="identifier" value="{{ identifier|default(email|default('')) }}" required
+                                   class="auth-input w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 pr-10"
+                                   placeholder="farazhaidet786@gmail.com" autocomplete="email" oninput="handleEmailInput(this)">
+                            
+                            <!-- Email Status Indicator Icon -->
+                            <span id="emailStatusIcon" class="absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs pointer-events-none transition-all">
+                                <i class="fas fa-envelope"></i>
+                            </span>
+                        </div>
+                        <p id="emailValidationHint" class="hidden mt-1 text-[11px] text-red-500 font-medium"></p>
+                    </div>
+
+                    <!-- Field: Password -->
+                    <div id="passwordGroup" class="{% if mode == 'forgot' %}hidden{% endif %}">
+                        <div class="flex items-center justify-between mb-1">
+                            <label for="passwordInput" class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300">
+                                <span id="passwordLabelText">{% if mode == 'reset' %}New password{% else %}Password{% endif %}</span>
+                            </label>
+                            
+                            <!-- Forgot Password Link (Visible in Login mode) -->
+                            <a href="javascript:void(0)" onclick="switchAuthMode('forgot')" id="forgotPasswordLink"
+                               class="{% if mode != 'login' and mode != '' and mode is not none %}hidden{% endif %} text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 transition">
+                                Forgot password?
+                            </a>
+                        </div>
+                        <div class="relative">
+                            <input type="password" id="passwordInput" name="password" required
+                                   class="auth-input w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 pr-11"
+                                   placeholder="••••••••••••" autocomplete="current-password" oninput="handlePasswordStrength(this.value)">
+                            
+                            <!-- Show / Hide Password Eye Toggle -->
+                            <button type="button" id="togglePasswordBtn" onclick="togglePasswordVisibility('passwordInput', 'passwordToggleIcon')"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
+                                    title="Toggle password visibility">
+                                <i id="passwordToggleIcon" class="fas fa-eye text-xs"></i>
+                            </button>
+                        </div>
+
+                        <!-- Real-time Password Strength Meter (Signup and Reset modes) -->
+                        <div id="strengthContainer" class="{% if mode != 'signup' and mode != 'reset' %}hidden{% endif %} mt-2 space-y-1.5">
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="text-gray-500">Strength: <strong id="strengthLabel" class="text-gray-700 dark:text-gray-300">Too short</strong></span>
+                                <span id="strengthScoreText" class="text-gray-400">0/4</span>
+                            </div>
+                            <div class="grid grid-cols-4 gap-1.5">
+                                <div id="strBar1" class="h-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors"></div>
+                                <div id="strBar2" class="h-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors"></div>
+                                <div id="strBar3" class="h-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors"></div>
+                                <div id="strBar4" class="h-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors"></div>
+                            </div>
+                            <!-- Rule Tags -->
+                            <div class="flex flex-wrap gap-1.5 pt-1 text-[10px]">
+                                <span id="ruleLength" class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500">8+ chars</span>
+                                <span id="ruleUpper" class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500">Uppercase</span>
+                                <span id="ruleNumber" class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500">Number</span>
+                                <span id="ruleSpecial" class="px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500">Special</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Field: Confirm Password (Visible in Signup & Reset modes) -->
+                    <div id="confirmPasswordGroup" class="{% if mode != 'signup' and mode != 'reset' %}hidden{% endif %}">
+                        <label for="confirmPasswordInput" class="block text-xs sm:text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                            Confirm password
+                        </label>
+                        <div class="relative">
+                            <input type="password" id="confirmPasswordInput" name="confirm"
+                                   class="auth-input w-full px-3.5 py-2.5 rounded-xl text-sm text-gray-900 dark:text-white placeholder-gray-400 pr-11"
+                                   placeholder="••••••••••••" autocomplete="new-password" oninput="checkPasswordMatch()">
+                            
+                            <button type="button" onclick="togglePasswordVisibility('confirmPasswordInput', 'confirmToggleIcon')"
+                                    class="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1"
+                                    title="Toggle password visibility">
+                                <i id="confirmToggleIcon" class="fas fa-eye text-xs"></i>
+                            </button>
+                        </div>
+                        <p id="passwordMatchHint" class="hidden mt-1 text-[11px] font-medium"></p>
+                    </div>
+
+                    <!-- Remember Me & Terms Checkbox -->
+                    <div id="optionsGroup" class="{% if mode == 'forgot' or mode == 'reset' %}hidden{% endif %} flex items-center justify-between text-xs">
+                        <label class="flex items-center gap-2 cursor-pointer select-none text-gray-600 dark:text-gray-400">
+                            <input type="checkbox" id="rememberMeInput" name="remember_me" value="true" checked
+                                   class="w-4 h-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 cursor-pointer">
+                            <span id="rememberMeLabel">Remember me</span>
+                        </label>
+                    </div>
+
+                    <!-- Primary Action Button ("Get Started" / "Sign In") -->
+                    <button type="submit" id="submitBtn"
+                            class="btn-gradient w-full py-3 px-5 rounded-xl font-semibold text-sm flex items-center justify-center gap-2">
+                        <span id="submitBtnSpinner" class="hidden">
+                            <i class="fas fa-circle-notch fa-spin text-sm"></i>
+                        </span>
+                        <span id="submitBtnText">
+                            {% if mode == 'signup' %}Get Started{% elif mode == 'forgot' %}Send Recovery Link{% elif mode == 'reset' %}Update Password{% else %}Sign In{% endif %}
+                        </span>
+                    </button>
+                </form>
+
+                <!-- ========================================================= -->
+                <!-- SOCIAL SIGN-IN SECTION -->
+                <!-- ========================================================= -->
+                <div id="socialAuthSection" class="{% if mode == 'forgot' or mode == 'reset' %}hidden{% endif %} mt-4">
+                    <!-- Divider: "or continue with" -->
+                    <div class="relative flex items-center justify-center mb-3.5">
+                        <div class="border-t border-gray-200 dark:border-gray-700 w-full"></div>
+                        <span class="bg-white dark:bg-[#141419] px-3.5 text-xs text-gray-400 dark:text-gray-500 font-medium tracking-wide whitespace-nowrap">
+                            or continue with
+                        </span>
+                        <div class="border-t border-gray-200 dark:border-gray-700 w-full"></div>
+                    </div>
+
+                    <!-- 3 Social Buttons Row (Behance/GitHub, Google, Facebook/Meta) -->
+                    <div class="grid grid-cols-3 gap-3">
+                        <!-- 1. Behance / GitHub Button -->
+                        <button type="button" onclick="triggerAlternativeOAuth('behance')"
+                                class="btn-social py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-200"
+                                title="Continue with Behance / GitHub">
+                            <img src="/static/images/behance-icon.svg" alt="Behance" class="w-4 h-4">
+                        </button>
+
+                        <!-- 2. Google Button (Official 4-color Google G icon) -->
+                        <button type="button" id="googleLoginBtn" onclick="openGoogleIdentityModal()"
+                                class="btn-social py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-200"
+                                title="Sign in with Google">
+                            <img src="/static/images/google-icon.svg" alt="Google" class="w-4 h-4">
+                        </button>
+
+                        <!-- 3. Facebook / Meta Button -->
+                        <button type="button" onclick="triggerAlternativeOAuth('facebook')"
+                                class="btn-social py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 text-xs font-semibold text-gray-700 dark:text-gray-200"
+                                title="Continue with Facebook">
+                            <img src="/static/images/facebook-icon.svg" alt="Facebook" class="w-4 h-4">
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Footer Switcher Link -->
+                <div class="text-center mt-4 text-xs sm:text-sm text-gray-500 dark:text-gray-400">
+                    <span id="footerPromptText">
+                        {% if mode == 'signup' %}Already have an account?{% elif mode == 'forgot' %}Remember your password?{% elif mode == 'reset' %}Back to{% else %}Don't have an account?{% endif %}
+                    </span>
+                    <a href="javascript:void(0)" id="footerActionLink" onclick="handleFooterActionClick()"
+                       class="font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-500 ml-1 transition">
+                        {% if mode == 'signup' %}Sign in{% elif mode == 'forgot' %}Sign in{% elif mode == 'reset' %}Sign in{% else %}Sign up{% endif %}
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- GOOGLE SIGN-IN INTERACTIVE MODAL (High-Fidelity Google Identity Flow) -->
+<!-- ========================================================================= -->
+<div id="googleModal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 modal-backdrop animate-fade-in">
+    <div class="bg-white dark:bg-[#1a1a24] rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 dark:border-gray-800 transform transition-all scale-100">
+        
+        <!-- Google Modal Header -->
+        <div class="flex items-center justify-between pb-4 border-b border-gray-100 dark:border-gray-800">
+            <div class="flex items-center gap-2.5">
+                <img src="/static/images/google-icon.svg" alt="Google" class="w-5 h-5">
+                <span class="text-sm font-semibold text-gray-900 dark:text-white">Sign in with Google</span>
+            </div>
+            <button type="button" onclick="closeGoogleIdentityModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 p-1">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+        </div>
+
+        <p class="text-xs text-gray-500 dark:text-gray-400 mt-3 mb-4">
+            Choose an account to continue to <strong>Aura Hub</strong>
+        </p>
+
+        <!-- Google Accounts List -->
+        <div class="space-y-2 mb-4">
+            <!-- Account Option 1: Thanush (Detected User) -->
+            <button type="button" onclick="performGoogleSignIn('thanush@example.com', 'Thanush', 'https://api.dicebear.com/7.x/identicon/svg?seed=Thanush')"
+                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition text-left group">
+                <img src="https://api.dicebear.com/7.x/identicon/svg?seed=Thanush" alt="Thanush" class="w-9 h-9 rounded-full bg-indigo-50 border border-indigo-200">
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition">Thanush</p>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">thanush@example.com</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 group-hover:text-indigo-500 text-xs"></i>
+            </button>
+
+            <!-- Account Option 2: Faraz Haider (Reference Image User) -->
+            <button type="button" onclick="performGoogleSignIn('farazhaidet786@gmail.com', 'Faraz Haider', 'https://api.dicebear.com/7.x/identicon/svg?seed=Faraz')"
+                    class="w-full p-3 rounded-xl border border-gray-200 dark:border-gray-700/80 hover:bg-gray-50 dark:hover:bg-gray-800 flex items-center gap-3 transition text-left group">
+                <img src="https://api.dicebear.com/7.x/identicon/svg?seed=Faraz" alt="Faraz" class="w-9 h-9 rounded-full bg-purple-50 border border-purple-200">
+                <div class="flex-1 min-w-0">
+                    <p class="text-xs font-semibold text-gray-900 dark:text-white truncate group-hover:text-indigo-600 transition">Faraz Haider</p>
+                    <p class="text-[11px] text-gray-500 dark:text-gray-400 truncate">farazhaidet786@gmail.com</p>
+                </div>
+                <i class="fas fa-chevron-right text-gray-300 group-hover:text-indigo-500 text-xs"></i>
+            </button>
+        </div>
+
+        <!-- Custom Google Account Form -->
+        <div class="pt-3 border-t border-gray-100 dark:border-gray-800">
+            <details class="text-xs text-gray-600 dark:text-gray-400">
+                <summary class="cursor-pointer font-medium hover:text-indigo-600 dark:hover:text-indigo-400 list-none flex items-center gap-1.5 py-1">
+                    <i class="fas fa-user-plus text-xs"></i> Use another Google account
+                </summary>
+                <div class="mt-3 space-y-2">
+                    <input type="text" id="customGoogleName" placeholder="Your name (e.g. Alex Rivera)"
+                           class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                    <input type="email" id="customGoogleEmail" placeholder="yourname@gmail.com"
+                           class="w-full px-3 py-2 text-xs rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 text-gray-900 dark:text-white">
+                    <button type="button" onclick="submitCustomGoogleAccount()"
+                            class="w-full py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 transition">
+                        Continue with this account
+                    </button>
+                </div>
+            </details>
+        </div>
+
+        <!-- Google Security disclaimer -->
+        <p class="mt-4 text-[10px] text-gray-400 text-center">
+            To continue, Google will share your name, email address, and profile picture with Aura Hub.
+        </p>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Current authentication mode: 'login' | 'signup' | 'forgot' | 'reset'
+    let currentMode = "{{ mode|default('login') }}";
+    let lockoutTimer = null;
+
+    // Check if initial lockout state passed from backend
+    const initialLockoutSeconds = {{ locked_seconds|default(0) }};
+    if (initialLockoutSeconds > 0) {
+        startLockoutCountdown(initialLockoutSeconds);
+    }
+
+    // Toggle between auth modes dynamically
+    function switchAuthMode(mode) {
+        currentMode = mode;
+        const form = document.getElementById('authForm');
+        const formModeInput = document.getElementById('formModeInput');
+        const title = document.getElementById('formTitle');
+        const subtitle = document.getElementById('formSubtitle');
+        const submitBtnText = document.getElementById('submitBtnText');
+        const fullNameGroup = document.getElementById('fullNameGroup');
+        const emailGroup = document.getElementById('emailGroup');
+        const passwordGroup = document.getElementById('passwordGroup');
+        const confirmPasswordGroup = document.getElementById('confirmPasswordGroup');
+        const strengthContainer = document.getElementById('strengthContainer');
+        const optionsGroup = document.getElementById('optionsGroup');
+        const forgotPasswordLink = document.getElementById('forgotPasswordLink');
+        const socialAuthSection = document.getElementById('socialAuthSection');
+        const footerPromptText = document.getElementById('footerPromptText');
+        const footerActionLink = document.getElementById('footerActionLink');
+        const tabLoginBtn = document.getElementById('tabLoginBtn');
+        const tabSignupBtn = document.getElementById('tabSignupBtn');
+
+        formModeInput.value = mode;
+        hideDynamicAlert();
+
+        // Update Tab Active styling
+        if (mode === 'signup') {
+            tabSignupBtn.className = "px-3.5 py-1.5 rounded-lg transition-all bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm";
+            tabLoginBtn.className = "px-3.5 py-1.5 rounded-lg transition-all text-gray-500 hover:text-gray-800 dark:hover:text-gray-200";
+        } else if (mode === 'login') {
+            tabLoginBtn.className = "px-3.5 py-1.5 rounded-lg transition-all bg-white dark:bg-gray-700 text-indigo-600 dark:text-white shadow-sm";
+            tabSignupBtn.className = "px-3.5 py-1.5 rounded-lg transition-all text-gray-500 hover:text-gray-800 dark:hover:text-gray-200";
+        } else {
+            tabLoginBtn.className = "px-3.5 py-1.5 rounded-lg transition-all text-gray-500 hover:text-gray-800 dark:hover:text-gray-200";
+            tabSignupBtn.className = "px-3.5 py-1.5 rounded-lg transition-all text-gray-500 hover:text-gray-800 dark:hover:text-gray-200";
+        }
+
+        if (mode === 'signup') {
+            form.action = "{{ url_for('register') }}";
+            title.textContent = "Create an account";
+            subtitle.textContent = "Access your tasks, notes, and projects anytime, anywhere - and keep everything flowing in one place.";
+            submitBtnText.textContent = "Get Started";
+            fullNameGroup.classList.remove('hidden');
+            emailGroup.classList.remove('hidden');
+            passwordGroup.classList.remove('hidden');
+            confirmPasswordGroup.classList.remove('hidden');
+            strengthContainer.classList.remove('hidden');
+            optionsGroup.classList.remove('hidden');
+            forgotPasswordLink.classList.add('hidden');
+            socialAuthSection.classList.remove('hidden');
+            footerPromptText.textContent = "Already have an account?";
+            footerActionLink.textContent = "Sign in";
+            document.getElementById('emailLabelText').textContent = "Your email";
+            document.getElementById('passwordLabelText').textContent = "Password";
+        } else if (mode === 'forgot') {
+            form.action = "{{ url_for('forgot_password') }}";
+            title.textContent = "Forgot password";
+            subtitle.textContent = "Enter your registered email address and we'll send you instructions to safely reset your password.";
+            submitBtnText.textContent = "Send Recovery Link";
+            fullNameGroup.classList.add('hidden');
+            emailGroup.classList.remove('hidden');
+            passwordGroup.classList.add('hidden');
+            confirmPasswordGroup.classList.add('hidden');
+            strengthContainer.classList.add('hidden');
+            optionsGroup.classList.add('hidden');
+            forgotPasswordLink.classList.add('hidden');
+            socialAuthSection.classList.add('hidden');
+            footerPromptText.textContent = "Remember your password?";
+            footerActionLink.textContent = "Sign in";
+            document.getElementById('emailLabelText').textContent = "Your email";
+        } else if (mode === 'reset') {
+            form.action = window.location.pathname;
+            title.textContent = "Set new password";
+            subtitle.textContent = "Choose a strong, secure new password for your account to regain access.";
+            submitBtnText.textContent = "Update Password & Sign In";
+            fullNameGroup.classList.add('hidden');
+            emailGroup.classList.add('hidden');
+            passwordGroup.classList.remove('hidden');
+            confirmPasswordGroup.classList.remove('hidden');
+            strengthContainer.classList.remove('hidden');
+            optionsGroup.classList.add('hidden');
+            forgotPasswordLink.classList.add('hidden');
+            socialAuthSection.classList.add('hidden');
+            footerPromptText.textContent = "Back to";
+            footerActionLink.textContent = "Sign in";
+            document.getElementById('passwordLabelText').textContent = "New password";
+        } else {
+            // Default: 'login'
+            form.action = "{{ url_for('login') }}";
+            title.textContent = "Welcome back";
+            subtitle.textContent = "Access your tasks, notes, and projects anytime, anywhere - and keep everything flowing in one place.";
+            submitBtnText.textContent = "Sign In";
+            fullNameGroup.classList.add('hidden');
+            emailGroup.classList.remove('hidden');
+            passwordGroup.classList.remove('hidden');
+            confirmPasswordGroup.classList.add('hidden');
+            strengthContainer.classList.add('hidden');
+            optionsGroup.classList.remove('hidden');
+            forgotPasswordLink.classList.remove('hidden');
+            socialAuthSection.classList.remove('hidden');
+            footerPromptText.textContent = "Don't have an account?";
+            footerActionLink.textContent = "Sign up";
+            document.getElementById('emailLabelText').textContent = "Your email";
+            document.getElementById('passwordLabelText').textContent = "Password";
+        }
+    }
+
+    // Handle bottom footer action click
+    function handleFooterActionClick() {
+        if (currentMode === 'signup' || currentMode === 'forgot' || currentMode === 'reset') {
+            switchAuthMode('login');
+        } else {
+            switchAuthMode('signup');
+        }
+    }
+
+    // Toggle password visibility (show/hide)
+    function togglePasswordVisibility(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if (input.type === 'password') {
+            input.type = 'text';
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        } else {
+            input.type = 'password';
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        }
+    }
+
+    // Real-time Email Format & Existence Validation
+    let emailDebounceTimer;
+    function handleEmailInput(input) {
+        clearTimeout(emailDebounceTimer);
+        const value = input.value.trim();
+        const hint = document.getElementById('emailValidationHint');
+        const icon = document.getElementById('emailStatusIcon');
+
+        if (!value) {
+            hint.classList.add('hidden');
+            icon.innerHTML = '<i class="fas fa-envelope"></i>';
+            icon.className = "absolute right-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs";
+            return;
+        }
+
+        // Email regex
+        const emailRegex = /^[\w\.-]+@[\w\.-]+\.\w+$/;
+        if (value.includes('@') && !emailRegex.test(value)) {
+            hint.textContent = "Please enter a valid email format (e.g., name@example.com)";
+            hint.classList.remove('hidden');
+            icon.innerHTML = '<i class="fas fa-circle-exclamation text-amber-500"></i>';
+            return;
+        }
+
+        hint.classList.add('hidden');
+        if (emailRegex.test(value)) {
+            icon.innerHTML = '<i class="fas fa-circle-check text-emerald-500"></i>';
+        } else {
+            icon.innerHTML = '<i class="fas fa-user text-indigo-400"></i>';
+        }
+
+        // Async check on server if in signup mode
+        if (currentMode === 'signup' && emailRegex.test(value)) {
+            emailDebounceTimer = setTimeout(() => {
+                fetch('/api/auth/validate-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: value })
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.exists) {
+                        hint.innerHTML = 'This email is already registered. <a href="javascript:void(0)" onclick="switchAuthMode(\'login\')" class="underline font-bold">Sign in instead?</a>';
+                        hint.classList.remove('hidden');
+                        icon.innerHTML = '<i class="fas fa-circle-exclamation text-amber-500"></i>';
+                    }
+                }).catch(() => {});
+            }, 600);
+        }
+    }
+
+    // Password Strength Evaluator
+    function handlePasswordStrength(pass) {
+        if (currentMode !== 'signup' && currentMode !== 'reset') return;
+
+        let score = 0;
+        const ruleLength = document.getElementById('ruleLength');
+        const ruleUpper = document.getElementById('ruleUpper');
+        const ruleNumber = document.getElementById('ruleNumber');
+        const ruleSpecial = document.getElementById('ruleSpecial');
+
+        // Check criteria
+        const hasLength = pass.length >= 8;
+        const hasUpper = /[A-Z]/.test(pass);
+        const hasNumber = /[0-9]/.test(pass);
+        const hasSpecial = /[^A-Za-z0-9]/.test(pass);
+
+        if (hasLength) score++;
+        if (hasUpper) score++;
+        if (hasNumber) score++;
+        if (hasSpecial) score++;
+
+        updateRuleBadge(ruleLength, hasLength);
+        updateRuleBadge(ruleUpper, hasUpper);
+        updateRuleBadge(ruleNumber, hasNumber);
+        updateRuleBadge(ruleSpecial, hasSpecial);
+
+        document.getElementById('strengthScoreText').textContent = score + '/4';
+        const label = document.getElementById('strengthLabel');
+        const b1 = document.getElementById('strBar1');
+        const b2 = document.getElementById('strBar2');
+        const b3 = document.getElementById('strBar3');
+        const b4 = document.getElementById('strBar4');
+
+        // Reset bars
+        [b1, b2, b3, b4].forEach(b => b.className = "h-1 rounded-full bg-gray-200 dark:bg-gray-700 transition-colors");
+
+        if (score === 0 || !pass) {
+            label.textContent = "Too short";
+            label.className = "text-gray-500";
+        } else if (score === 1) {
+            label.textContent = "Weak";
+            label.className = "text-red-500 font-semibold";
+            b1.className = "h-1 rounded-full bg-red-500 transition-colors";
+        } else if (score === 2) {
+            label.textContent = "Fair";
+            label.className = "text-amber-500 font-semibold";
+            b1.className = b2.className = "h-1 rounded-full bg-amber-500 transition-colors";
+        } else if (score === 3) {
+            label.textContent = "Good";
+            label.className = "text-blue-500 font-semibold";
+            b1.className = b2.className = b3.className = "h-1 rounded-full bg-blue-500 transition-colors";
+        } else {
+            label.textContent = "Strong";
+            label.className = "text-emerald-500 font-semibold";
+            b1.className = b2.className = b3.className = b4.className = "h-1 rounded-full bg-emerald-500 transition-colors";
+        }
+
+        checkPasswordMatch();
+    }
+
+    function updateRuleBadge(el, active) {
+        if (active) {
+            el.className = "px-2 py-0.5 rounded bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 font-medium";
+        } else {
+            el.className = "px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-500";
+        }
+    }
+
+    // Password Match Checker
+    function checkPasswordMatch() {
+        if (currentMode !== 'signup' && currentMode !== 'reset') return;
+        const p1 = document.getElementById('passwordInput').value;
+        const p2 = document.getElementById('confirmPasswordInput').value;
+        const hint = document.getElementById('passwordMatchHint');
+
+        if (!p2) {
+            hint.classList.add('hidden');
+            return;
+        }
+
+        if (p1 === p2) {
+            hint.textContent = "✓ Passwords match";
+            hint.className = "mt-1 text-[11px] font-medium text-emerald-600";
+            hint.classList.remove('hidden');
+        } else {
+            hint.textContent = "✕ Passwords do not match";
+            hint.className = "mt-1 text-[11px] font-medium text-red-500";
+            hint.classList.remove('hidden');
+        }
+    }
+
+    // Lockout countdown timer
+    function startLockoutCountdown(seconds) {
+        clearInterval(lockoutTimer);
+        const banner = document.getElementById('lockoutBanner');
+        const span = document.getElementById('lockoutSeconds');
+        const submitBtn = document.getElementById('submitBtn');
+
+        let remaining = seconds;
+        banner.classList.remove('hidden');
+        span.textContent = remaining;
+        submitBtn.disabled = true;
+
+        lockoutTimer = setInterval(() => {
+            remaining--;
+            span.textContent = remaining;
+            if (remaining <= 0) {
+                clearInterval(lockoutTimer);
+                banner.classList.add('hidden');
+                submitBtn.disabled = false;
+                showDynamicAlert("Account unlocked. You may now attempt to sign in again.", "info");
+            }
+        }, 1000);
+    }
+
+    // Dynamic alert helper
+    function showDynamicAlert(message, type = "error") {
+        const box = document.getElementById('dynamicAlert');
+        const icon = document.getElementById('dynamicAlertIcon');
+        const text = document.getElementById('dynamicAlertText');
+
+        box.classList.remove('hidden');
+        text.innerHTML = message;
+
+        if (type === "error") {
+            box.className = "mb-4 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium flex items-center gap-2.5 bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40";
+            icon.className = "fas fa-circle-exclamation text-red-500";
+        } else if (type === "success") {
+            box.className = "mb-4 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium flex items-center gap-2.5 bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40";
+            icon.className = "fas fa-circle-check text-emerald-500";
+        } else {
+            box.className = "mb-4 rounded-xl px-3.5 py-2.5 text-xs sm:text-sm font-medium flex items-center gap-2.5 bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40";
+            icon.className = "fas fa-circle-info text-indigo-500";
+        }
+    }
+
+    function hideDynamicAlert() {
+        const box = document.getElementById('dynamicAlert');
+        box.classList.add('hidden');
+    }
+
+    // Form submission with edge cases handling & AJAX support
+    document.getElementById('authForm').addEventListener('submit', function (e) {
+        e.preventDefault();
+        hideDynamicAlert();
+
+        const submitBtn = document.getElementById('submitBtn');
+        const spinner = document.getElementById('submitBtnSpinner');
+        const form = this;
+        const emailInput = document.getElementById('emailInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const confirmInput = document.getElementById('confirmPasswordInput');
+
+        // Validation for client-side edge cases
+        if (currentMode === 'login') {
+            if (!emailInput.value.trim()) {
+                emailInput.focus();
+                showDynamicAlert("Please enter your email or username.", "error");
+                return;
+            }
+            if (!passwordInput.value) {
+                passwordInput.focus();
+                showDynamicAlert("Please enter your password.", "error");
+                return;
+            }
+        } else if (currentMode === 'signup') {
+            if (!emailInput.value.trim() || !passwordInput.value) {
+                showDynamicAlert("Please complete all required fields.", "error");
+                return;
+            }
+            if (passwordInput.value.length < 8) {
+                passwordInput.focus();
+                showDynamicAlert("Password must be at least 8 characters long.", "error");
+                return;
+            }
+            if (confirmInput.value !== passwordInput.value) {
+                confirmInput.focus();
+                showDynamicAlert("Passwords do not match.", "error");
+                return;
+            }
+        } else if (currentMode === 'forgot') {
+            if (!emailInput.value.trim()) {
+                emailInput.focus();
+                showDynamicAlert("Please enter your email address to recover your password.", "error");
+                return;
+            }
+        } else if (currentMode === 'reset') {
+            if (!passwordInput.value) {
+                passwordInput.focus();
+                showDynamicAlert("Please enter a new password.", "error");
+                return;
+            }
+            if (passwordInput.value.length < 8) {
+                showDynamicAlert("New password must be at least 8 characters long.", "error");
+                return;
+            }
+            if (confirmInput.value !== passwordInput.value) {
+                confirmInput.focus();
+                showDynamicAlert("Passwords do not match.", "error");
+                return;
+            }
+        }
+
+        // Show spinner state
+        submitBtn.disabled = true;
+        spinner.classList.remove('hidden');
+
+        const formData = new FormData(form);
+        const payload = {};
+        formData.forEach((val, key) => payload[key] = val);
+
+        fetch(form.action, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            },
+            body: JSON.stringify(payload)
+        })
+        .then(async response => {
+            const data = await response.json().catch(() => ({}));
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+
+            if (response.ok && data.success) {
+                if (data.redirect) {
+                    window.location.href = data.redirect;
+                } else if (currentMode === 'forgot') {
+                    showDynamicAlert(data.message || "Password recovery instructions have been prepared.", "success");
+                    if (data.reset_url) {
+                        // Show simulated preview toast
+                        setTimeout(() => {
+                            window.location.href = "{{ url_for('forgot_password') }}";
+                        }, 800);
+                    }
+                } else {
+                    showDynamicAlert("Action completed successfully!", "success");
+                }
+            } else {
+                // Handle edge cases
+                if (data.code === 'ACCOUNT_LOCKED' && data.retry_after) {
+                    startLockoutCountdown(data.retry_after);
+                    showDynamicAlert(data.error || "Account locked.", "error");
+                } else if (data.code === 'INVALID_PASSWORD') {
+                    passwordInput.classList.add('shake');
+                    setTimeout(() => passwordInput.classList.remove('shake'), 500);
+                    showDynamicAlert(data.error || "Incorrect password. Please try again.", "error");
+                } else if (data.code === 'USER_NOT_FOUND') {
+                    showDynamicAlert(`${data.error} <a href="javascript:void(0)" onclick="switchAuthMode('signup')" class="underline font-bold ml-1">Create one here</a>`, "error");
+                } else if (data.code === 'EMAIL_EXISTS') {
+                    showDynamicAlert(`${data.error} <a href="javascript:void(0)" onclick="switchAuthMode('login')" class="underline font-bold ml-1">Sign in here</a>`, "error");
+                } else {
+                    showDynamicAlert(data.error || "An error occurred. Please check your credentials.", "error");
+                }
+            }
+        })
+        .catch(err => {
+            submitBtn.disabled = false;
+            spinner.classList.add('hidden');
+            // Fallback to standard form submission if fetch fails or network issue
+            form.submit();
+        });
+    });
+
+    // =========================================================================
+    // GOOGLE AUTHENTICATION MODAL & LOGIC
+    // =========================================================================
+    function openGoogleIdentityModal() {
+        document.getElementById('googleModal').classList.remove('hidden');
+    }
+
+    function closeGoogleIdentityModal() {
+        document.getElementById('googleModal').classList.add('hidden');
+    }
+
+    // Close on escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeGoogleIdentityModal();
+        }
+    });
+
+    function performGoogleSignIn(email, name, picture) {
+        const modal = document.getElementById('googleModal');
+        modal.classList.add('opacity-75');
+
+        fetch('/auth/google', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: email,
+                name: name,
+                picture: picture,
+                google_id: 'g_' + btoa(email).replace(/[^a-zA-Z0-9]/g, '').slice(0, 16)
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.redirect) {
+                window.location.href = data.redirect;
+            } else {
+                closeGoogleIdentityModal();
+                showDynamicAlert(data.error || "Google authentication failed.", "error");
+            }
+        })
+        .catch(err => {
+            closeGoogleIdentityModal();
+            showDynamicAlert("Network error during Google sign in. Please try again.", "error");
+        });
+    }
+
+    function submitCustomGoogleAccount() {
+        const name = document.getElementById('customGoogleName').value.trim() || "Google User";
+        const email = document.getElementById('customGoogleEmail').value.trim();
+        const emailRegex = /^[\w\.-]+@[\w\.-]+\.\w+$/;
+
+        if (!email || !emailRegex.test(email)) {
+            alert("Please enter a valid Google email address.");
+            return;
+        }
+
+        performGoogleSignIn(email, name, `https://api.dicebear.com/7.x/identicon/svg?seed=${encodeURIComponent(email)}`);
+    }
+
+    // Alternative OAuth placeholders
+    function triggerAlternativeOAuth(provider) {
+        showDynamicAlert(`Connecting with ${provider.charAt(0).toUpperCase() + provider.slice(1)}... Please use Google or standard sign-in for full demo authentication.`, "info");
+    }
+</script>
+{% endblock %}

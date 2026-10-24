@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}AI Chatbot{% endblock %}
+
+{% block body %}
+<div class="flex h-screen w-full overflow-hidden bg-gray-50 dark:bg-[#0d0d0f] text-gray-900 dark:text-gray-100">
+
+    <!-- ================= Sidebar ================= -->
+    <aside id="sidebar"
+           class="fixed md:static z-40 inset-y-0 left-0 w-[19rem] shrink-0 -translate-x-full md:translate-x-0
+                  flex flex-col bg-white dark:bg-[#171719] border-r border-gray-200 dark:border-white/10
+                  transition-transform duration-300 ease-in-out"
+           aria-label="Conversation sidebar">
+
+        <!-- Brand + collapse -->
+        <div class="flex items-center justify-between px-3 h-14 shrink-0 border-b border-gray-100 dark:border-white/5">
+            <a href="{{ url_for('chat') }}" class="flex items-center gap-2.5 px-1 font-semibold text-[0.95rem]">
+                <span class="w-8 h-8 rounded-lg grid place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white p-1.5 shadow-sm">
+                    <img src="/static/images/logo-white.svg" alt="Aura Logo" class="w-full h-full object-contain">
+                </span>
+                <span>Aura Hub</span>
+            </a>
+            <button id="sidebarToggle" type="button"
+                    class="w-8 h-8 grid place-items-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10"
+                    aria-label="Toggle sidebar" title="Toggle sidebar">
+                <i class="fas fa-bars text-[14px]"></i>
+            </button>
+        </div>
+
+        <!-- New chat -->
+        <div class="px-3 pt-3">
+            <button id="newChatBtn" type="button"
+                    class="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-xl border border-gray-200 dark:border-white/10
+                           text-[0.9rem] font-medium hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                    aria-label="Start a new chat">
+                <i class="fas fa-plus text-[13px] text-brand-600"></i>
+                New chat
+                <span class="ml-auto text-[0.68rem] text-gray-400 border border-gray-200 dark:border-white/10 rounded px-1.5 py-0.5">Ctrl</span>
+            </button>
+        </div>
+
+        <!-- Search -->
+        <div class="px-3 pt-3">
+            <div class="relative">
+                <i class="fas fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-[12px] text-gray-400"></i>
+                <input id="convSearch" type="search" placeholder="Search chats" aria-label="Search conversations"
+                       class="w-full pl-8 pr-3 py-2 text-[0.85rem] rounded-lg bg-gray-100 dark:bg-white/5
+                              border border-transparent focus:border-brand-400 focus:bg-white dark:focus:bg-white/10
+                              outline-none transition-colors" />
+            </div>
+        </div>
+
+        <!-- Conversation list -->
+        <div class="flex-1 min-h-0 scroll-y px-3 py-3">
+            <p class="px-1 pb-2 text-[0.68rem] font-semibold uppercase tracking-wide text-gray-400">Recent</p>
+            <div id="convList" class="space-y-0.5"></div>
+            <div id="convEmpty" class="px-2 py-8 text-center text-gray-400 text-sm">
+                <i class="far fa-comments text-2xl mb-2"></i>
+                <p>No conversations yet</p>
+            </div>
+        </div>
+
+        <!-- User footer -->
+        <div class="shrink-0 border-t border-gray-100 dark:border-white/5 p-2">
+            <a href="{{ url_for('logout') }}"
+               class="flex items-center gap-3 px-2.5 py-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/5 transition-colors">
+                {% if avatar_url %}
+                <img src="{{ avatar_url }}" alt="{{ username }}" class="w-8 h-8 rounded-full object-cover border border-brand-200 dark:border-white/10 shadow-sm">
+                {% else %}
+                <span class="w-8 h-8 rounded-full grid place-items-center bg-brand-100 dark:bg-white/10 text-brand-700 dark:text-brand-300 text-[13px] font-semibold">
+                    {{ (username or 'U') | upper | first }}
+                </span>
+                {% endif %}
+                <span class="flex-1 min-w-0">
+                    <span class="block truncate text-[0.85rem] font-medium">{{ username or 'User' }}</span>
+                    <span class="block text-[0.7rem] text-gray-400">Personal Hub</span>
+                </span>
+                <i class="fas fa-arrow-right-from-bracket text-[13px] text-gray-400" title="Log out"></i>
+            </a>
+        </div>
+    </aside>
+    <div id="sidebarBackdrop" class="sidebar-backdrop md:hidden" aria-hidden="true"></div>
+
+    <!-- ================= Main ================= -->
+    <div class="flex-1 flex flex-col min-w-0">
+
+        <!-- Header -->
+        <header class="h-14 shrink-0 flex items-center gap-2 px-3 md:px-4 border-b border-gray-200 dark:border-white/10 bg-white/80 dark:bg-[#171719]/80 backdrop-blur">
+            <button id="sidebarToggleMobile" type="button"
+                    class="md:hidden w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10"
+                    aria-label="Open sidebar">
+                <i class="fas fa-bars text-[15px]"></i>
+            </button>
+            <h1 id="chatTitle" class="font-medium text-[0.95rem] truncate">New Chat</h1>
+            <div class="ml-auto flex items-center gap-1">
+                <button type="button" data-theme-toggle
+                        class="w-9 h-9 grid place-items-center rounded-lg text-gray-500 hover:bg-gray-100 dark:hover:bg-white/10"
+                        aria-label="Toggle dark mode" title="Toggle theme">
+                    <i data-theme-icon class="fas fa-moon text-[15px]"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Scroll area -->
+        <div id="scrollArea" class="flex-1 min-h-0 scroll-y">
+            <div class="mx-auto w-full max-w-3xl px-4 md:px-6 py-6">
+
+                <!-- Welcome / empty state -->
+                <section id="welcome" class="flex flex-col items-center justify-center text-center pt-10 md:pt-16">
+                    <div class="w-14 h-14 rounded-2xl grid place-items-center bg-gradient-to-br from-brand-500 to-brand-700 text-white shadow-lg shadow-brand-500/20 mb-5 p-3">
+                        <img src="/static/images/logo-white.svg" alt="Aura Logo" class="w-full h-full object-contain">
+                    </div>
+                    <h2 class="text-2xl md:text-3xl font-semibold tracking-tight">How can I help you today?</h2>
+                    <p class="mt-2 text-gray-500 dark:text-gray-400 text-sm md:text-[0.95rem]">
+                        Ask anything — I can explain, write, code, and brainstorm with you.
+                    </p>
+
+                    <!-- Composer sits here while the chat is empty (it is authored
+                         here so the first paint is already in the right place) -->
+                    <div id="welcomeComposerSlot" class="w-full mt-6">
+                        <form id="messageForm" class="composer w-full text-left" autocomplete="off">
+                            <div class="flex items-end gap-2 rounded-3xl border border-gray-200 dark:border-white/10 bg-white dark:bg-[#1f1f22]
+                                        shadow-sm px-3 py-2 focus-within:border-brand-400 focus-within:shadow-md transition-all">
+                                <textarea id="messageInput" rows="1" placeholder="Message AI Chatbot…" aria-label="Message"
+                                          class="flex-1 resize-none bg-transparent outline-none text-[0.95rem] leading-6 max-h-[200px] py-1.5 px-1
+                                                 placeholder:text-gray-400"></textarea>
+                                <button id="sendBtn" type="submit" aria-label="Send message"
+                                        class="shrink-0 w-9 h-9 grid place-items-center rounded-full bg-brand-600 text-white
+                                               hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors">
+                                    <i class="fas fa-arrow-up text-[15px]"></i>
+                                </button>
+                            </div>
+                            <p class="text-center text-[0.7rem] text-gray-400 mt-2 px-2">
+                                AI can make mistakes. Consider verifying important information.
+                            </p>
+                        </form>
+                    </div>
+
+                    <!-- Suggestions -->
+                    <div class="mt-6 grid gap-2 w-full sm:grid-cols-2">
+                        <button type="button" data-prompt="Explain quantum computing in simple terms"
+                                class="suggestion text-left px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-brand-300 hover:bg-white dark:hover:bg-white/5 transition-all">
+                            <i class="fas fa-lightbulb text-brand-500 text-[13px] mr-2"></i>
+                            <span class="text-[0.85rem] font-medium">Explain quantum computing</span>
+                            <span class="block mt-1 text-[0.75rem] text-gray-400">in simple terms</span>
+                        </button>
+                        <button type="button" data-prompt="Write a Python function to reverse a string"
+                                class="suggestion text-left px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-brand-300 hover:bg-white dark:hover:bg-white/5 transition-all">
+                            <i class="fas fa-code text-brand-500 text-[13px] mr-2"></i>
+                            <span class="text-[0.85rem] font-medium">Write some Python code</span>
+                            <span class="block mt-1 text-[0.75rem] text-gray-400">reverse a string, step by step</span>
+                        </button>
+                        <button type="button" data-prompt="Give me 5 creative weekend project ideas"
+                                class="suggestion text-left px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-brand-300 hover:bg-white dark:hover:bg-white/5 transition-all">
+                            <i class="fas fa-wand-magic-sparkles text-brand-500 text-[13px] mr-2"></i>
+                            <span class="text-[0.85rem] font-medium">Brainstorm ideas</span>
+                            <span class="block mt-1 text-[0.75rem] text-gray-400">5 weekend projects to try</span>
+                        </button>
+                        <button type="button" data-prompt="Summarize the key benefits of renewable energy"
+                                class="suggestion text-left px-4 py-3 rounded-xl border border-gray-200 dark:border-white/10 hover:border-brand-300 hover:bg-white dark:hover:bg-white/5 transition-all">
+                            <i class="fas fa-leaf text-brand-500 text-[13px] mr-2"></i>
+                            <span class="text-[0.85rem] font-medium">Summarize a topic</span>
+                            <span class="block mt-1 text-[0.75rem] text-gray-400">benefits of renewable energy</span>
+                        </button>
+                    </div>
+                </section>
+
+                <!-- Messages get appended here -->
+                <div id="chatStream" class="space-y-6" aria-live="polite" aria-atomic="false"></div>
+            </div>
+        </div>
+
+        <!-- Dock (composer moves here once the chat is active) -->
+        <div id="dock" class="shrink-0 border-t border-gray-200 dark:border-white/10 bg-white/80 dark:bg-[#0d0d0f]/80 backdrop-blur">
+            <div class="mx-auto w-full max-w-3xl px-4 md:px-6 py-3" id="dockSlot"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Conversation data for the sidebar (pre-serialized to avoid datetime issues) -->
+<script id="conversationsData" type="application/json">
+[
+{% for c in conversations %}
+    {"id": {{ c.id }},
+     "title": {{ (c.title or 'New Conversation') | tojson }},
+     "last_message": {{ (c.last_message or '') | tojson }},
+     "updated_at": {{ (c.updated_at.isoformat() if c.updated_at else '') | tojson }}}{% if not loop.last %},{% endif %}
+{% endfor %}
+]
+</script>
+{% endblock %}
